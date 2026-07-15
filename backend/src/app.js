@@ -21,7 +21,7 @@ const app = express();
 // );
 const allowedOrigins = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(",") 
-  : ["http://localhost:3000","http://localhost:3001"];
+  : ["http://localhost:3000","https://woahcab.onrender.com"];
 
 app.use(cors({
   origin: allowedOrigins,
