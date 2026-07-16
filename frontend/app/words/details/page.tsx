@@ -37,8 +37,10 @@ function WordDetailsContent() {
   const [deleting, setDeleting] = useState(false);
   const [note, setNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [deletingNote, setDeletingNote] = useState(false);
   const [noteError, setNoteError] = useState("");
   const [error, setError] = useState("");
+
 
   useEffect(() => {
     // 1. Fetch current logged-in user profile
@@ -105,7 +107,28 @@ function WordDetailsContent() {
     }
   };
 
-  const isAuthor = wordData?.createdBy && currentUser && wordData.createdBy._id === currentUser._id;
+const handleDeleteNote = async () => {
+    if (!id || !isAuthor || !wordData?.note ) return;
+
+    if (!window.confirm("Are you sure you want to delete your note?")) return;
+    setDeletingNote(true);
+    setNoteError("");
+    try {
+      const res = await apiFetch(`/WoahCab/words/note/${id}`, {
+        method: "DELETE",
+      });
+      if (res?.data) {
+        setWordData(res.data);
+        setNote("");
+      }
+    } catch (err: unknown) {
+      setNoteError(err instanceof Error ? err.message : "Failed to delete note");
+    } finally {
+      setDeletingNote(false);
+    }
+  };
+
+  const isAuthor = currentUser && wordData && currentUser._id === wordData.createdBy?._id;
 
   if (loading) {
     return (
@@ -291,8 +314,19 @@ function WordDetailsContent() {
                 {noteError && (
                   <p className="mt-3 text-sm text-red-600 dark:text-red-400 font-medium">{noteError}</p>
                 )}
+                <div className="flex justify-end gap-3 mt-4">
+                  {wordData.note && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteNote}
+                      disabled={deletingNote}
+                      className="py-2.5 px-4 bg-red-500/10 border border-red-500/20 hover:border-red-500/40 text-red-650 dark:text-red-400 text-xs font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mr-2"
+                    >
+                      {deletingNote ? "Deleting..." : "Delete Note"}
+                    </button>
+                  )}
 
-                <div className="flex justify-end mt-4">
+                
                   <button
                     type="button"
                     onClick={handleSaveNote}

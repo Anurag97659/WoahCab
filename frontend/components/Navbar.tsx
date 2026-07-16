@@ -85,7 +85,12 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-slate-200 dark:border-slate-900/80 px-4 sm:px-6 py-4 transition-all duration-300">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/words" className="flex items-center gap-2 group">
+        <Link href="/words" className="flex items-center gap-2.5 group">
+          <img
+            src="/logo.jpg"
+            alt="LexIconic Logo"
+            className="w-8 h-8 rounded-lg shadow-md border border-violet-500/20 group-hover:scale-105 transition-transform object-cover"
+          />
           <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 via-indigo-500 to-indigo-600 dark:from-violet-400 dark:via-indigo-200 dark:to-indigo-400 bg-clip-text text-transparent group-hover:opacity-95 transition-all">
             LexIconic
           </span>

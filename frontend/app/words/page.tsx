@@ -19,6 +19,7 @@ interface WordItem {
   antonyms: string[];
   examples: string[];
   note?: string;
+  createdAt?: string;
   createdBy?: {
     _id: string;
     username: string;
@@ -31,6 +32,7 @@ export default function WordListPage() {
   const [words, setWords] = useState<WordItem[]>([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "mine">("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState("");
@@ -94,7 +96,20 @@ export default function WordListPage() {
       }
     }
     return true;
-  });
+  })
+  .sort((firstWord, secondWord) => {
+      const timeDifference = new Date(firstWord.createdAt || 0).getTime() - new Date(secondWord.createdAt || 0).getTime();
+      return sortOrder === "newest" ? -timeDifference : timeDifference;
+    });
+
+const formatUploadDate = (date?: string) => {
+    if (!date) return "";
+    return new Intl.DateTimeFormat("en", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(date));
+  };
 
   return (
     <div className="min-h-screen bg-background text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
@@ -136,6 +151,22 @@ export default function WordListPage() {
               >
                 My Words
               </button>
+            </div>
+
+            <div className="relative shrink-0">
+              <label htmlFor="word-sort" className="sr-only">Sort words</label>
+              <select
+                id="word-sort"
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest")}
+                className="appearance-none w-full bg-card border border-border rounded-2xl py-3 pl-4 pr-10 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 cursor-pointer"
+              >
+                <option value="newest">Newest to Oldest</option>
+                <option value="oldest">Oldest to Newest</option>
+              </select>
+              <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m7 10 5 5 5-5" />
+              </svg>
             </div>
 
             {/* Search Input (with loading indicator) */}
