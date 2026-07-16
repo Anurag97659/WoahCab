@@ -7,6 +7,7 @@ import {
   getWordById,
   updateWord,
   saveNote,
+  deleteNote,
   deleteWord,
   searchWords
 } from "../controllers/word.controllers.js";
@@ -16,7 +17,9 @@ router.route("/createword").post(verifyJWT, createWord);
 router.route("/getwords").get(optionalJWT, getWords);
 router.route("/getword/:id").get(optionalJWT, getWordById);
 router.route("/updateword/:id").put(verifyJWT, updateWord);
-router.route("/note/:id").put(verifyJWT, saveNote);
+router.route("/note/:id").put(verifyJWT, saveNote).delete(verifyJWT, deleteNote);
+// Dedicated DELETE route for notes — mirrors /deleteword/:id to avoid CORS preflight issues on Android
+router.route("/deletenote/:id").delete(verifyJWT, deleteNote);
 router.route("/deleteword/:id").delete(verifyJWT, deleteWord);
 router.route("/search").get(optionalJWT, searchWords);
 

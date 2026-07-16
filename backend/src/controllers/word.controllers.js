@@ -164,6 +164,32 @@ const saveNote = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, formatWordForViewer(word, req.user._id), "Note saved successfully"));
 });
 
+const deleteNote = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const word = await Word.findById(id);
+
+  if (!word) {
+    throw new ApiError(404, "Word not found");
+  }
+
+  if (word.createdBy.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You can only delete notes from words you created");
+  }
+
+  const noteIndex = word.notes.findIndex(
+    (wordNote) => wordNote.user.toString() === req.user._id.toString()
+  );
+
+  if (noteIndex === -1) {
+    throw new ApiError(404, "Note not found");
+  }
+
+  word.notes.splice(noteIndex, 1);
+  await word.save();
+  await word.populate("createdBy", "username fullname");
+  res.status(200).json(new ApiResponse(200, formatWordForViewer(word, req.user._id), "Note deleted successfully"));
+});
+
 const deleteWord = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -265,6 +291,7 @@ export {
   getWordById,
   updateWord,
   saveNote,
+  deleteNote,
   deleteWord,
   searchWords
 };
