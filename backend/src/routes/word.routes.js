@@ -9,12 +9,14 @@ import {
   saveNote,
   deleteNote,
   deleteWord,
-  searchWords
+  searchWords,
+  generateTest
 } from "../controllers/word.controllers.js";
 const router = Router();
 
 router.route("/createword").post(verifyJWT, createWord);
 router.route("/getwords").get(optionalJWT, getWords);
+router.route("/generatetest").get(optionalJWT, generateTest);
 router.route("/getword/:id").get(optionalJWT, getWordById);
 router.route("/updateword/:id").put(verifyJWT, updateWord);
 router.route("/note/:id").put(verifyJWT, saveNote).delete(verifyJWT, deleteNote);
