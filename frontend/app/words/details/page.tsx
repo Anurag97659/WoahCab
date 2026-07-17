@@ -206,9 +206,12 @@ const handleDeleteNote = async () => {
                 </h1>
                 {wordData.createdBy && (
                   <p className="text-slate-550 dark:text-slate-400 text-xs mt-2 font-semibold">
-                    Submitted by <span className="text-slate-800 dark:text-slate-350 font-bold">@{wordData.createdBy.username}</span> ({wordData.createdBy.fullname})
-                  </p>
+                    Submitted by <span className="text-slate-800 dark:text-slate-350 font-bold">@{wordData.createdBy.username}</span> ({wordData.createdBy.fullname}) ({wordData.createdAt && `${new Date(wordData.createdAt).toLocaleDateString()}`})
+                  </p> 
                 )}
+                
+                        
+
               </div>
             </div>
 

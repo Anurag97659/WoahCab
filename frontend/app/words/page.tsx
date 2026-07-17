@@ -232,7 +232,7 @@ const formatUploadDate = (date?: string) => {
                       </h2>
                       {item.createdBy && (
                         <span className="text-[10px] bg-background border border-border px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-455 font-bold uppercase tracking-wider">
-                          @{item.createdBy.username}
+                          @{item.createdBy.username}{item.createdAt && ` · ${formatUploadDate(item.createdAt)}`}
                         </span>
                       )}
                     </div>
