@@ -50,6 +50,17 @@ const wordSchema = new Schema(
       ],
       default: [],
     },
+    // Stars are personal to each user. A word can be important to one user
+    // without changing how it appears for anyone else.
+    starredBy: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

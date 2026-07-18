@@ -8,6 +8,7 @@ import {
   updateWord,
   saveNote,
   deleteNote,
+  toggleWordStar,
   deleteWord,
   searchWords,
   generateTest
@@ -20,6 +21,7 @@ router.route("/generatetest").get(optionalJWT, generateTest);
 router.route("/getword/:id").get(optionalJWT, getWordById);
 router.route("/updateword/:id").put(verifyJWT, updateWord);
 router.route("/note/:id").put(verifyJWT, saveNote).delete(verifyJWT, deleteNote);
+router.route("/star/:id").patch(verifyJWT, toggleWordStar);
 // Dedicated DELETE route for notes — mirrors /deleteword/:id to avoid CORS preflight issues on Android
 router.route("/deletenote/:id").delete(verifyJWT, deleteNote);
 router.route("/deleteword/:id").delete(verifyJWT, deleteWord);

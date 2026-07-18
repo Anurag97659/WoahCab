@@ -19,6 +19,7 @@ interface WordItem {
   antonyms: string[];
   examples: string[];
   note?: string;
+  isStarred?: boolean;
   createdAt?: string;
   createdBy?: {
     _id: string;
@@ -31,10 +32,11 @@ export default function WordListPage() {
   const [currentUser, setCurrentUser] = useState<{ _id: string; username: string } | null>(null);
   const [words, setWords] = useState<WordItem[]>([]);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "mine">("all");
+  const [filterType, setFilterType] = useState<"all" | "mine" | "important">("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [starringWordId, setStarringWordId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   // 1. Fetch current user profile on mount
@@ -88,12 +90,40 @@ export default function WordListPage() {
     return () => clearTimeout(delayDebounce);
   }, [search, router]);
 
-  // 3. Apply local ownership filter on words
+  const handleToggleStar = async (wordId: string) => {
+    if (!currentUser) {
+      router.push("/login");
+      return;
+    }
+
+    setStarringWordId(wordId);
+    setError("");
+
+    try {
+      const res = await apiFetch(`/WoahCab/words/star/${wordId}`, {
+        method: "PATCH",
+      });
+      if (res?.data) {
+        setWords((currentWords) =>
+          currentWords.map((word) => (word._id === wordId ? res.data : word))
+        );
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update important words");
+    } finally {
+      setStarringWordId(null);
+    }
+  };
+
+  // 3. Apply local ownership and personal-important filters on words
   const filteredWords = words.filter((item) => {
     if (filterType === "mine") {
       if (!currentUser || !item.createdBy || item.createdBy._id !== currentUser._id) {
         return false;
       }
+    }
+    if (filterType === "important" && !item.isStarred) {
+      return false;
     }
     return true;
   })
@@ -127,7 +157,7 @@ const formatUploadDate = (date?: string) => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Toggle Switch: All vs My Words */}
+            {/* Vocabulary sections */}
             <div className="flex gap-1.5 p-1 bg-card border border-border rounded-2xl w-fit shrink-0 shadow-sm">
               <button
                 type="button"
@@ -150,6 +180,20 @@ const formatUploadDate = (date?: string) => {
                 }`}
               >
                 My Words
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterType("important")}
+                className={`py-2 px-4 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filterType === "important"
+                    ? "bg-violet-600 text-white shadow-sm"
+                    : "text-slate-600 dark:text-slate-450 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m12 2.5 2.94 5.96 6.58.96-4.76 4.64 1.12 6.56L12 17.54l-5.88 3.09 1.12-6.56-4.76-4.64 6.58-.96L12 2.5Z" />
+                </svg>
+                Important
               </button>
             </div>
 
@@ -215,9 +259,8 @@ const formatUploadDate = (date?: string) => {
             {filteredWords.map((item) => {
               const isMine = currentUser && item.createdBy && item.createdBy._id === currentUser._id;
               return (
-                <Link
+                <article
                   key={item._id}
-                  href={`/words/details?id=${item._id}`}
                   className="group flex flex-col justify-between bg-card hover:bg-card-hover border border-border rounded-3xl p-6 shadow-lg transition-all duration-300 hover:shadow-violet-650/5 hover:-translate-y-0.5 cursor-pointer relative overflow-hidden"
                 >
                   {/* Subtle color highlight if it's user's own word */}
@@ -225,8 +268,27 @@ const formatUploadDate = (date?: string) => {
                     <div className="absolute top-0 right-0 w-3 h-3 bg-violet-650 rounded-bl-lg" />
                   )}
 
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStar(item._id)}
+                    disabled={starringWordId === item._id}
+                    aria-label={item.isStarred ? `Remove ${item.word} from important words` : `Mark ${item.word} as important`}
+                    aria-pressed={Boolean(item.isStarred)}
+                    title={item.isStarred ? "Remove from important words" : "Mark as important"}
+                    className={`absolute top-5 right-5 z-10 flex h-9 w-9 items-center justify-center rounded-xl border transition-all disabled:cursor-wait disabled:opacity-60 ${
+                      item.isStarred
+                        ? "border-amber-400/40 bg-amber-400/15 text-amber-500"
+                        : "border-border bg-background text-slate-400 hover:border-amber-400/40 hover:text-amber-500"
+                    }`}
+                  >
+                    <svg className="h-4 w-4" fill={item.isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.24l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" />
+                    </svg>
+                  </button>
+
+                  <Link href={`/words/details?id=${item._id}`} className="block h-full">
                   <div>
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between gap-3 mb-4 pr-10">
                       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-violet-650 dark:group-hover:text-violet-400 transition-colors capitalize">
                         {item.word}
                       </h2>
@@ -273,7 +335,8 @@ const formatUploadDate = (date?: string) => {
                     </div>
                   )}
 
-                </Link>
+                  </Link>
+                </article>
               );
             })}
           </div>
@@ -290,6 +353,8 @@ const formatUploadDate = (date?: string) => {
                 ? "No matching vocabulary found. Try another description!" 
                 : filterType === "mine"
                   ? "You haven't generated any words yet. Switch back to 'All Words' or submit a new word!"
+                  : filterType === "important"
+                    ? "You haven't marked any words as important yet. Use the star beside a word to save it here."
                   : "Your vocabulary bank is empty. Get started by adding your first word!"}
             </p>
             {(!search && filterType === "all") && (

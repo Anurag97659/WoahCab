@@ -9,14 +9,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // notes belonging to other users. A viewer receives only their own note.
 const formatWordForViewer = (word, userId) => {
   const wordObject = word.toObject ? word.toObject() : word;
-  const { notes = [], ...safeWord } = wordObject;
+  const { notes = [], starredBy = [], ...safeWord } = wordObject;
+  const isStarred = Boolean(
+    userId && starredBy.some((starredUserId) => starredUserId.toString() === userId.toString())
+  );
 
   if (!userId) {
-    return safeWord;
+    return { ...safeWord, isStarred };
   }
 
   const viewerNote = notes.find((note) => note.user?.toString() === userId.toString());
-  return viewerNote ? { ...safeWord, note: viewerNote.content } : safeWord;
+  return viewerNote
+    ? { ...safeWord, isStarred, note: viewerNote.content }
+    : { ...safeWord, isStarred };
 };
 
 const createWord = asyncHandler(async (req, res) => {
@@ -188,6 +193,38 @@ const deleteNote = asyncHandler(async (req, res) => {
   await word.save();
   await word.populate("createdBy", "username fullname");
   res.status(200).json(new ApiResponse(200, formatWordForViewer(word, req.user._id), "Note deleted successfully"));
+});
+
+const toggleWordStar = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const word = await Word.findById(id);
+
+  if (!word) {
+    throw new ApiError(404, "Word not found");
+  }
+
+  const userId = req.user._id;
+  const existingStarIndex = word.starredBy.findIndex(
+    (starredUserId) => starredUserId.toString() === userId.toString()
+  );
+
+  if (existingStarIndex === -1) {
+    word.starredBy.push(userId);
+  } else {
+    word.starredBy.splice(existingStarIndex, 1);
+  }
+
+  await word.save();
+  await word.populate("createdBy", "username fullname");
+
+  const isStarred = existingStarIndex === -1;
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      formatWordForViewer(word, userId),
+      isStarred ? "Word marked as important" : "Word removed from important words"
+    )
+  );
 });
 
 const deleteWord = asyncHandler(async (req, res) => {
@@ -367,6 +404,7 @@ export {
   updateWord,
   saveNote,
   deleteNote,
+  toggleWordStar,
   deleteWord,
   searchWords,
   generateTest

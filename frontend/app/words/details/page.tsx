@@ -19,6 +19,7 @@ interface WordItem {
   antonyms: string[];
   examples: string[];
   note?: string;
+  isStarred?: boolean;
   createdAt?: string; 
   updatedAt?: string;
   createdBy?: {
@@ -41,6 +42,8 @@ function WordDetailsContent() {
   const [savingNote, setSavingNote] = useState(false);
   const [deletingNote, setDeletingNote] = useState(false);
   const [noteError, setNoteError] = useState("");
+  const [togglingStar, setTogglingStar] = useState(false);
+  const [starError, setStarError] = useState("");
   const [error, setError] = useState("");
 
 
@@ -84,6 +87,26 @@ function WordDetailsContent() {
     } catch (err: any) {
       setError(err.message || "Failed to delete word");
       setDeleting(false);
+    }
+  };
+
+  const handleToggleStar = async () => {
+    if (!id || !currentUser) {
+      router.push("/login");
+      return;
+    }
+
+    setTogglingStar(true);
+    setStarError("");
+    try {
+      const res = await apiFetch(`/WoahCab/words/star/${id}`, { method: "PATCH" });
+      if (res?.data) {
+        setWordData(res.data);
+      }
+    } catch (err: unknown) {
+      setStarError(err instanceof Error ? err.message : "Failed to update important words");
+    } finally {
+      setTogglingStar(false);
     }
   };
 
@@ -202,19 +225,38 @@ const handleDeleteNote = async () => {
 
           <div className="backdrop-blur-xl bg-card border border-border rounded-3xl p-8 shadow-2xl">
             <div className="border-b border-border pb-6 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div>
-                <h1 className="text-4xl sm:text-5xl font-black capitalize bg-gradient-to-r from-violet-600 via-indigo-500 to-indigo-600 dark:from-violet-400 dark:via-indigo-200 dark:to-indigo-400 bg-clip-text text-transparent tracking-tight">
-                  {wordData.word}
-                </h1>
-                {wordData.createdBy && (
-                  <p className="text-slate-550 dark:text-slate-400 text-xs mt-2 font-semibold">
-                    Submitted by <span className="text-slate-800 dark:text-slate-350 font-bold">@{wordData.createdBy.username}</span> ({wordData.createdBy.fullname}) ({wordData.createdAt && `${new Date(wordData.createdAt).toLocaleDateString()}`})
-                  </p> 
-                )}
-                
-                        
-
+              <div className="flex items-start gap-3">
+                <div>
+                  <h1 className="text-4xl sm:text-5xl font-black capitalize bg-gradient-to-r from-violet-600 via-indigo-500 to-indigo-600 dark:from-violet-400 dark:via-indigo-200 dark:to-indigo-400 bg-clip-text text-transparent tracking-tight">
+                    {wordData.word}
+                  </h1>
+                  {wordData.createdBy && (
+                    <p className="text-slate-550 dark:text-slate-400 text-xs mt-2 font-semibold">
+                      Submitted by <span className="text-slate-800 dark:text-slate-350 font-bold">@{wordData.createdBy.username}</span> ({wordData.createdBy.fullname}) ({wordData.createdAt && `${new Date(wordData.createdAt).toLocaleDateString()}`})
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleStar}
+                  disabled={togglingStar}
+                  aria-label={wordData.isStarred ? `Remove ${wordData.word} from important words` : `Mark ${wordData.word} as important`}
+                  aria-pressed={Boolean(wordData.isStarred)}
+                  title={wordData.isStarred ? "Remove from important words" : "Mark as important"}
+                  className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-all disabled:cursor-wait disabled:opacity-60 ${
+                    wordData.isStarred
+                      ? "border-amber-400/40 bg-amber-400/15 text-amber-500"
+                      : "border-border bg-background text-slate-400 hover:border-amber-400/40 hover:text-amber-500"
+                  }`}
+                >
+                  <svg className="h-5 w-5" fill={wordData.isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m12 3 2.78 5.63 6.22.9-4.5 4.39 1.06 6.2L12 17.24l-5.56 2.92 1.06-6.2L3 9.53l6.22-.9L12 3Z" />
+                  </svg>
+                </button>
               </div>
+              {starError && (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400 font-medium">{starError}</p>
+              )}
             </div>
 
             <div className="space-y-8 mb-8">
