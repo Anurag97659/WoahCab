@@ -30,8 +30,19 @@ const createWord = asyncHandler(async (req, res) => {
   if (!word || word.trim() === "") {
     throw new ApiError(400, "Word is required");
   }
-
+  if(word.trim().length < 2){
+    throw new ApiError(400, "Word must be at least 2 characters long");
+  }
+  if(word.trim().length > 45){
+    throw new ApiError(400, "Word cannot be longer than 45 characters");
+  }
+  if (!/^[a-zA-Z\s']+$/.test(word.trim())) {
+    throw new ApiError(400, "Word must contain only alphabetic characters");
+  }
   const cleanWord = word.trim().toLowerCase();
+  if (cleanWord.split(" ").length > 12) {
+    throw new ApiError(400, "Phrase cannot contain more than 12 words");
+ }
   const existingWord = await Word.findOne({ word: cleanWord });
   if (existingWord) {
     throw new ApiError(409, "Word already exists in the database");
@@ -51,7 +62,7 @@ const createWord = asyncHandler(async (req, res) => {
     const prompt = `Generate a vocabulary dictionary entry for the English word "${cleanWord}". 
 Return a JSON object matching this exact structure:
 {
-  "phonetic": "Standard International Phonetic Alphabet (IPA) representation of the word (e.g. /ɪˈfemərəl/)",
+  "phonetic": "Phonetic transcription of the word in IPA format",
   "definitions": [
     {
       "partOfSpeech": "noun" (or "adverb", "adjective", "verb", etc.),
@@ -62,7 +73,9 @@ Return a JSON object matching this exact structure:
   "antonyms": ["up to 5 antonyms"],
   "examples": ["exactly 3 sentence examples showing usage of the word"]
 }
-
+only allow dictionary entries for real English words and a valid phrase or idioms, if user types random prompts or gibberish, aur ask questions or anything which is not a valid word or idiom, like "What is the meaning of life?" or "How to make a cake? or tell me your name ", check it accurately and only passed the valid words or idioms to the dictionary entry generator, if the input is invalid,
+return a JSON object with the following structure:
+{"error": "Invalid input or unable to generate dictionary entry"}
 Provide definitions for different parts of speech if applicable (e.g. noun, adjective, adverb). Ensure all list fields are array of strings. Do not include any markdown styling like \`\`\`json. Return only the JSON object.`;
 
     const result = await model.generateContent(prompt);
@@ -76,7 +89,9 @@ Provide definitions for different parts of speech if applicable (e.g. noun, adje
       console.error("Parse error details:", parseError);
       throw new ApiError(500, "Failed to parse dictionary response from Gemini");
     }
-
+    if (generatedData.error) {
+      throw new ApiError(400, `Gemini error: ${generatedData.error}`);
+    }
     if (!generatedData.definitions || !Array.isArray(generatedData.definitions)) {
       throw new ApiError(500, "Invalid definitions format returned from Gemini");
     }
@@ -327,7 +342,7 @@ const generateTest = asyncHandler(async (req, res) => {
   }
 
   const shuffled = words.sort(() => 0.5 - Math.random());
-  const selectedWords = shuffled.slice(0, 20);
+  const selectedWords = shuffled.slice(0, 30);
 
   const compactWords = selectedWords.map(w => ({
     word: w.word,
@@ -349,7 +364,7 @@ const generateTest = asyncHandler(async (req, res) => {
     });
 
     const prompt = `You are an expert test generator creating a competitive English vocabulary exam.
-Generate exactly 20 multiple-choice questions (MCQs) based on the following list of vocabulary words:
+Generate exactly 30 multiple-choice questions (MCQs) based on the following list of vocabulary words:
 ${JSON.stringify(compactWords)}
 
 Guidelines:
@@ -358,8 +373,9 @@ Guidelines:
 3. The options (A, B, C, D) must be independent of the database words (i.e. they can be any plausible words/phrases, not just other words from the database).
 4. Each question must have exactly 4 options labeled starting with "A. ", "B. ", "C. ", "D. ".
 5. Identify the correct answer option by its label letter ('A', 'B', 'C', or 'D').
-6. Generate exactly 20 questions. If there are fewer than 20 words provided, you can generate multiple questions for some words to reach the 20 question count.
-7. Return a JSON array matching this exact schema:
+6. Generate exactly 30 questions. If there are fewer than 30 words provided, you can generate multiple questions for some words to reach the 30 question count.
+7. Question should be high-quality, clear, and unambiguous, suitable for competitive exams. Avoid any vague or overly complex phrasing.
+8. Return a JSON array matching this exact schema:
 [
   {
     "question": "A complete sentence or question asking about a word or its usage, e.g., 'What is the synonym of ...' or 'Choose the correct word to fill in the blank: ...'",

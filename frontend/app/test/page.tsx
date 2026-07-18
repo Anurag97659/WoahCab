@@ -116,7 +116,7 @@ export default function TestPage() {
             <div className="text-center py-12">
               <div className="w-12 h-12 rounded-full border-4 border-t-violet-600 border-indigo-500/20 animate-spin mx-auto mb-4" />
               <p className="text-slate-655 dark:text-slate-400 font-semibold animate-pulse">
-                AI is generating 20 AFCAT/CDS level questions from your vocabulary...
+                AI is generating 30 AFCAT/CDS level questions from your vocabulary...
               </p>
             </div>
             {Array.from({ length: 3 }).map((_, idx) => (
