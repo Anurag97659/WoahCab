@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LexIconic",
   description: "A dictionary of words and phrases from the English language, with definitions, synonyms, antonyms, and example sentences.",
+  verification: {
+    google: "o-wLWugc1Io9rkmdkoJWkWGlhND8V2CeqP-O2Pypf9A",
+  },
   icons: {
     icon: [
       {
@@ -40,6 +43,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="google-site-verification" content="o-wLWugc1Io9rkmdkoJWkWGlhND8V2CeqP-O2Pypf9A" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
